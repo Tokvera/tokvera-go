@@ -44,7 +44,7 @@ func main() {
 		log.Fatal(err)
 	}
 	if err := tracer.FinishSpan(ctx, modelSpan, tokvera.FinishSpanOptions{
-		Usage: tokvera.Usage{PromptTokens: 54, CompletionTokens: 121, TotalTokens: 175},
+		Usage:   tokvera.Usage{PromptTokens: 54, CompletionTokens: 121, TotalTokens: 175},
 		Metrics: &tokvera.TraceMetrics{CostUSD: 0.00042},
 		Outcome: "success",
 	}); err != nil {

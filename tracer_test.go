@@ -27,7 +27,7 @@ func TestTracerStartFinishLifecycle(t *testing.T) {
 		t.Fatalf("attach payload: %v", err)
 	}
 	if err := tracer.FinishSpan(context.Background(), handle, FinishSpanOptions{
-		Usage: Usage{PromptTokens: 12, CompletionTokens: 8, TotalTokens: 20},
+		Usage:   Usage{PromptTokens: 12, CompletionTokens: 8, TotalTokens: 20},
 		Outcome: "success",
 	}); err != nil {
 		t.Fatalf("finish span: %v", err)

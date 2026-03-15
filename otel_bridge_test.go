@@ -25,10 +25,10 @@ func TestOTelBridgeExportsCanonicalEvent(t *testing.T) {
 		EndTime:    time.Unix(1700000000, 250000000),
 		StatusCode: "ok",
 		Attributes: map[string]any{
-			"llm.provider":             "openai",
-			"gen_ai.request.model":     "gpt-4o-mini",
-			"tokvera.event_type":       "responses_create",
-			"tokvera.step_name":        "llm_call",
+			"llm.provider":              "openai",
+			"gen_ai.request.model":      "gpt-4o-mini",
+			"tokvera.event_type":        "responses_create",
+			"tokvera.step_name":         "llm_call",
 			"gen_ai.usage.total_tokens": int64(17),
 		},
 	}})
