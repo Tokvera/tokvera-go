@@ -100,29 +100,29 @@ func (tracer *Tracer) trackProvider(
 func defaultProviderEventType(provider string) string {
 	switch provider {
 	case "openai":
-		return "responses_create"
+		return "openai.request"
 	case "anthropic":
-		return "messages_create"
+		return "anthropic.request"
 	case "gemini":
-		return "generate_content"
+		return "gemini.request"
 	case "mistral":
-		return "chat_complete"
+		return "mistral.request"
 	default:
-		return "provider_call"
+		return "tokvera.trace"
 	}
 }
 
 func defaultProviderEndpoint(provider string) string {
 	switch provider {
 	case "openai":
-		return "/v1/responses"
+		return "responses.create"
 	case "anthropic":
-		return "/v1/messages"
+		return "messages.create"
 	case "gemini":
-		return "/v1/models/generateContent"
+		return "models.generate_content"
 	case "mistral":
-		return "/v1/chat/completions"
+		return "chat.complete"
 	default:
-		return "provider"
+		return "manual.span"
 	}
 }

@@ -26,10 +26,10 @@ func (bridge *OTelBridge) Export(ctx context.Context, spans []OTelReadableSpan) 
 			Provider: chooseString(
 				attributeString(span.Attributes, "tokvera.provider"),
 				attributeString(span.Attributes, "llm.provider"),
-				"opentelemetry",
+				"tokvera",
 			),
-			EventType: chooseString(attributeString(span.Attributes, "tokvera.event_type"), "otel_span"),
-			Endpoint:  chooseString(attributeString(span.Attributes, "tokvera.endpoint"), "otel"),
+			EventType: chooseString(attributeString(span.Attributes, "tokvera.event_type")),
+			Endpoint:  chooseString(attributeString(span.Attributes, "tokvera.endpoint")),
 			Model: chooseString(
 				attributeString(span.Attributes, "tokvera.model"),
 				attributeString(span.Attributes, "gen_ai.request.model"),
@@ -44,6 +44,20 @@ func (bridge *OTelBridge) Export(ctx context.Context, spans []OTelReadableSpan) 
 				SpanKind:       chooseString(attributeString(span.Attributes, "tokvera.span_kind"), "orchestrator"),
 				SchemaVersion:  chooseString(bridge.tracer.base.SchemaVersion, TraceSchemaVersionV2),
 			},
+		}
+		if handle.EventType == "" {
+			if handle.Provider == "tokvera" {
+				handle.EventType = "tokvera.trace"
+			} else {
+				handle.EventType = defaultProviderEventType(handle.Provider)
+			}
+		}
+		if handle.Endpoint == "" {
+			if handle.Provider == "tokvera" {
+				handle.Endpoint = "otel.span"
+			} else {
+				handle.Endpoint = defaultProviderEndpoint(handle.Provider)
+			}
 		}
 		if handle.RunID == "" {
 			handle.RunID = handle.TraceID

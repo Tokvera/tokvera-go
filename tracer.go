@@ -34,9 +34,9 @@ func (tracer *Tracer) StartTrace(ctx context.Context, options TrackOptions) (Tra
 		SpanID:       chooseString(options.SpanID, merged.SpanID, generateID("spn")),
 		ParentSpanID: "",
 		StartedAt:    time.Now().UTC(),
-		Provider:     chooseString(options.Provider, merged.Provider, "custom"),
-		EventType:    chooseString(options.EventType, merged.EventType, "manual_trace"),
-		Endpoint:     chooseString(options.Endpoint, merged.Endpoint, "manual"),
+		Provider:     chooseString(options.Provider, merged.Provider, "tokvera"),
+		EventType:    chooseString(options.EventType, merged.EventType, "tokvera.trace"),
+		Endpoint:     chooseString(options.Endpoint, merged.Endpoint, "manual.trace"),
 		Model:        chooseString(options.Model, merged.Model),
 		Options:      merged,
 	}
@@ -68,9 +68,9 @@ func (tracer *Tracer) StartSpan(ctx context.Context, parent TraceHandle, options
 		SpanID:       chooseString(options.SpanID, merged.SpanID, generateID("spn")),
 		ParentSpanID: chooseString(options.ParentSpanID, merged.ParentSpanID, parent.SpanID),
 		StartedAt:    time.Now().UTC(),
-		Provider:     chooseString(options.Provider, merged.Provider, parent.Provider, "custom"),
-		EventType:    chooseString(options.EventType, merged.EventType, "manual_span"),
-		Endpoint:     chooseString(options.Endpoint, merged.Endpoint, "manual"),
+		Provider:     chooseString(options.Provider, merged.Provider, parent.Provider, "tokvera"),
+		EventType:    chooseString(options.EventType, merged.EventType, "tokvera.trace"),
+		Endpoint:     chooseString(options.Endpoint, merged.Endpoint, "manual.span"),
 		Model:        chooseString(options.Model, merged.Model, parent.Model),
 		Options:      merged,
 	}
@@ -130,8 +130,11 @@ func (tracer *Tracer) TrackOptionsFromTraceContext(handle TraceHandle, overrides
 	if strings.TrimSpace(overrides.RunID) == "" {
 		merged.RunID = handle.RunID
 	}
-	if strings.TrimSpace(overrides.ParentSpanID) == "" && strings.TrimSpace(overrides.SpanID) == "" {
+	if strings.TrimSpace(overrides.ParentSpanID) == "" {
 		merged.ParentSpanID = handle.SpanID
+	}
+	if strings.TrimSpace(overrides.SpanID) == "" {
+		merged.SpanID = ""
 	}
 	if strings.TrimSpace(overrides.Provider) == "" {
 		merged.Provider = handle.Provider
@@ -169,42 +172,71 @@ func buildEvent(handle TraceHandle, status string, options FinishSpanOptions) Ev
 	payloadBlocks := append([]TracePayloadBlock{}, handle.Options.PayloadBlocks...)
 	payloadBlocks = append(payloadBlocks, options.PayloadBlocks...)
 	decision := mergeDecision(handle.Options.Decision, options.Decision)
+	outcome := chooseString(options.Outcome, handle.Options.Outcome, mapStatusToOutcome(status))
+	retryReason := chooseString(handle.Options.RetryReason, decisionRetry(decision))
+	fallbackReason := chooseString(handle.Options.FallbackReason, decisionFallback(decision))
+	qualityLabel := chooseString(options.QualityLabel, handle.Options.QualityLabel)
+	feedbackScore := chooseFloatPointer(options.FeedbackScore, handle.Options.FeedbackScore)
+	usage := options.Usage
+	if usage.PromptTokens == 0 {
+		usage.PromptTokens = metrics.PromptTokens
+	}
+	if usage.CompletionTokens == 0 {
+		usage.CompletionTokens = metrics.CompletionTokens
+	}
+	if usage.TotalTokens == 0 {
+		usage.TotalTokens = metrics.TotalTokens
+	}
+
+	var evaluation *EventEvaluation
+	if outcome != "" || retryReason != "" || fallbackReason != "" || qualityLabel != "" || feedbackScore != nil {
+		evaluation = &EventEvaluation{
+			Outcome:        outcome,
+			RetryReason:    retryReason,
+			FallbackReason: fallbackReason,
+			QualityLabel:   qualityLabel,
+			FeedbackScore:  feedbackScore,
+		}
+	}
 
 	return Event{
-		Provider:       handle.Provider,
-		EventType:      handle.EventType,
-		Endpoint:       handle.Endpoint,
-		Model:          handle.Model,
-		Status:         status,
-		Timestamp:      time.Now().UTC(),
-		Feature:        handle.Options.Feature,
-		TenantID:       handle.Options.TenantID,
-		CustomerID:     handle.Options.CustomerID,
-		AttemptType:    handle.Options.AttemptType,
-		Plan:           handle.Options.Plan,
-		Environment:    handle.Options.Environment,
-		TemplateID:     handle.Options.TemplateID,
-		TraceID:        handle.TraceID,
-		RunID:          handle.RunID,
-		ConversationID: handle.Options.ConversationID,
-		SpanID:         handle.SpanID,
-		ParentSpanID:   handle.ParentSpanID,
-		StepName:       handle.Options.StepName,
-		Outcome:        chooseString(options.Outcome, handle.Options.Outcome, mapStatusToOutcome(status)),
-		RetryReason:    chooseString(handle.Options.RetryReason, decisionRetry(decision)),
-		FallbackReason: chooseString(handle.Options.FallbackReason, decisionFallback(decision)),
-		QualityLabel:   chooseString(options.QualityLabel, handle.Options.QualityLabel),
-		FeedbackScore:  chooseFloatPointer(options.FeedbackScore, handle.Options.FeedbackScore),
-		SchemaVersion:  chooseString(handle.Options.SchemaVersion, TraceSchemaVersionV2),
-		SpanKind:       handle.Options.SpanKind,
-		ToolName:       handle.Options.ToolName,
-		PayloadRefs:    append([]string{}, handle.Options.PayloadRefs...),
-		PayloadBlocks:  payloadBlocks,
-		Metrics:        metrics,
-		Decision:       decision,
-		Usage:          options.Usage,
-		LatencyMs:      metrics.LatencyMs,
-		Error:          options.Error,
+		SchemaVersion: chooseString(handle.Options.SchemaVersion, TraceSchemaVersionV2),
+		EventType:     handle.EventType,
+		Provider:      handle.Provider,
+		Endpoint:      handle.Endpoint,
+		Status:        status,
+		Timestamp:     time.Now().UTC(),
+		LatencyMs:     metrics.LatencyMs,
+		Model:         chooseString(handle.Model, "manual"),
+		Usage:         usage,
+		Tags: EventTags{
+			Feature:        handle.Options.Feature,
+			TenantID:       handle.Options.TenantID,
+			CustomerID:     handle.Options.CustomerID,
+			AttemptType:    handle.Options.AttemptType,
+			Plan:           handle.Options.Plan,
+			Environment:    handle.Options.Environment,
+			TemplateID:     handle.Options.TemplateID,
+			TraceID:        handle.TraceID,
+			RunID:          handle.RunID,
+			ConversationID: handle.Options.ConversationID,
+			SpanID:         handle.SpanID,
+			ParentSpanID:   handle.ParentSpanID,
+			StepName:       handle.Options.StepName,
+			Outcome:        outcome,
+			RetryReason:    retryReason,
+			FallbackReason: fallbackReason,
+			QualityLabel:   qualityLabel,
+			FeedbackScore:  feedbackScore,
+		},
+		Evaluation:    evaluation,
+		SpanKind:      handle.Options.SpanKind,
+		ToolName:      handle.Options.ToolName,
+		PayloadRefs:   append([]string{}, handle.Options.PayloadRefs...),
+		PayloadBlocks: payloadBlocks,
+		Metrics:       metrics,
+		Decision:      decision,
+		Error:         options.Error,
 	}
 }
 

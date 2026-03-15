@@ -5,17 +5,11 @@ import (
 	"log"
 
 	tokvera "github.com/tokvera/tokvera-go"
+	"github.com/tokvera/tokvera-go/examples/internal/exampleenv"
 )
 
 func main() {
-	tracer := tokvera.NewTracer(tokvera.TrackOptions{
-		APIKey:              "tok_live_...",
-		Feature:             "course_assistant",
-		TenantID:            "tenant_demo",
-		Environment:         "dev",
-		CaptureContent:      true,
-		EmitLifecycleEvents: true,
-	})
+	tracer := tokvera.NewTracer(exampleenv.BaseOptions("go_manual_tracer", true))
 
 	ctx := context.Background()
 	root, err := tracer.StartTrace(ctx, tokvera.TrackOptions{
@@ -28,8 +22,8 @@ func main() {
 
 	modelSpan, err := tracer.StartSpan(ctx, root, tokvera.TrackOptions{
 		Provider:  "openai",
-		EventType: "responses_create",
-		Endpoint:  "/v1/responses",
+		EventType: "openai.request",
+		Endpoint:  "responses.create",
 		Model:     "gpt-4o-mini",
 		StepName:  "draft_reply",
 		SpanKind:  "model",

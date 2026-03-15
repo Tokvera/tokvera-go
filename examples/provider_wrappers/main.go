@@ -5,15 +5,11 @@ import (
 	"log"
 
 	tokvera "github.com/tokvera/tokvera-go"
+	"github.com/tokvera/tokvera-go/examples/internal/exampleenv"
 )
 
 func main() {
-	tracer := tokvera.NewTracer(tokvera.TrackOptions{
-		APIKey:         "tok_live_...",
-		Feature:        "multi_model_router",
-		TenantID:       "tenant_demo",
-		CaptureContent: true,
-	})
+	tracer := tokvera.NewTracer(exampleenv.BaseOptions("go_provider_wrappers", true))
 
 	ctx := context.Background()
 	root, err := tracer.StartTrace(ctx, tokvera.TrackOptions{StepName: "router"})

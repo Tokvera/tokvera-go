@@ -27,7 +27,8 @@ func TestOTelBridgeExportsCanonicalEvent(t *testing.T) {
 		Attributes: map[string]any{
 			"llm.provider":              "openai",
 			"gen_ai.request.model":      "gpt-4o-mini",
-			"tokvera.event_type":        "responses_create",
+			"tokvera.event_type":        "openai.request",
+			"tokvera.endpoint":          "responses.create",
 			"tokvera.step_name":         "llm_call",
 			"gen_ai.usage.total_tokens": int64(17),
 		},
@@ -46,7 +47,13 @@ func TestOTelBridgeExportsCanonicalEvent(t *testing.T) {
 	if events[0].Metrics == nil || events[0].Metrics.TotalTokens != 17 {
 		t.Fatalf("expected mapped token metrics")
 	}
+	if events[0].Usage.TotalTokens != 17 {
+		t.Fatalf("expected mapped usage totals")
+	}
 	if events[0].Status != "success" {
 		t.Fatalf("expected success status, got %s", events[0].Status)
+	}
+	if events[0].Tags.TraceID != "trc_otel" || events[0].Tags.SpanID != "spn_otel" {
+		t.Fatalf("expected otel trace context tags to be preserved")
 	}
 }

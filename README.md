@@ -1,10 +1,10 @@
 # tokvera-go
 
-Go SDK scaffold for Tokvera's AI cost and trace intelligence platform.
+Go SDK for Tokvera's AI cost and trace intelligence platform.
 
 ## Status
 
-This repository is a **CI-first Wave 1 scaffold**.
+This repository contains Tokvera's **Wave 1 Go SDK**.
 
 It already includes the intended public shape for:
 - manual trace and span lifecycle
@@ -14,12 +14,12 @@ It already includes the intended public shape for:
 - a generic OpenTelemetry bridge surface
 - runnable examples and unit tests
 
-It is **not official yet**. Promotion is blocked until all of these pass:
-- Go CI (`gofmt`, `go vet`, `go test`)
-- canonical contract verification against the deployed API
-- lifecycle visibility in `/dashboard/traces/live`
-- trace detail and inspector visibility in the dashboard
-- mixed-composition duplicate-emission checks
+Wave 1 qualification is complete:
+- Go CI (`gofmt`, `go vet`, `go test`) passes
+- canonical contract verification against the deployed API passes
+- lifecycle visibility in `/dashboard/traces/live` passes
+- trace detail and inspector visibility in the dashboard pass
+- mixed-composition duplicate-emission checks pass
 
 ## Install
 
@@ -56,8 +56,8 @@ func main() {
 
   child, err := tracer.StartSpan(ctx, root, tokvera.TrackOptions{
     Provider:  "openai",
-    EventType: "responses_create",
-    Endpoint:  "/v1/responses",
+    EventType: "openai.request",
+    Endpoint:  "responses.create",
     Model:     "gpt-4o-mini",
     StepName:  "draft_reply",
     SpanKind:  "model",
@@ -127,7 +127,8 @@ err := bridge.Export(ctx, []tokvera.OTelReadableSpan{
     Attributes: map[string]any{
       "llm.provider":          "openai",
       "gen_ai.request.model":  "gpt-4o-mini",
-      "tokvera.event_type":    "responses_create",
+      "tokvera.event_type":    "openai.request",
+      "tokvera.endpoint":      "responses.create",
       "gen_ai.usage.total_tokens": int64(17),
     },
   },
@@ -138,6 +139,7 @@ err := bridge.Export(ctx, []tokvera.OTelReadableSpan{
 
 - `examples/manual_tracer`
 - `examples/provider_wrappers`
+- `examples/otel_bridge`
 
 ## Local Development
 
@@ -148,11 +150,13 @@ go test ./...
 node scripts/check-canonical-contract.mjs
 ```
 
-## Release Bar
+## Current Wave 1 Scope
 
-Before `tokvera-go` can be marked complete in the execution board:
-- docs page exists and is linked from Tokvera docs
-- examples run end-to-end
-- canonical contract checks pass
-- live traces show lifecycle rows for Go events
-- dashboard visibility passes in overview, traces, live traces, and trace detail
+The Go SDK is qualified for:
+- existing-app manual tracing
+- provider wrappers for OpenAI, Anthropic, Gemini, and Mistral
+- payload attachment
+- lifecycle events for live traces
+- OpenTelemetry bridge export
+
+The next follow-up is deeper ecosystem coverage. Named agent-runtime helpers are not part of the current Go wave.

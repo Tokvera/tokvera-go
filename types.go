@@ -9,15 +9,44 @@ const (
 )
 
 type Usage struct {
-	PromptTokens     int `json:"prompt_tokens,omitempty"`
-	CompletionTokens int `json:"completion_tokens,omitempty"`
-	TotalTokens      int `json:"total_tokens,omitempty"`
+	PromptTokens     int `json:"prompt_tokens"`
+	CompletionTokens int `json:"completion_tokens"`
+	TotalTokens      int `json:"total_tokens"`
 }
 
 type EventError struct {
 	Message string `json:"message"`
 	Type    string `json:"type,omitempty"`
 	Code    string `json:"code,omitempty"`
+}
+
+type EventTags struct {
+	Feature        string   `json:"feature"`
+	TenantID       string   `json:"tenant_id"`
+	CustomerID     string   `json:"customer_id,omitempty"`
+	AttemptType    string   `json:"attempt_type,omitempty"`
+	Plan           string   `json:"plan,omitempty"`
+	Environment    string   `json:"environment,omitempty"`
+	TemplateID     string   `json:"template_id,omitempty"`
+	TraceID        string   `json:"trace_id,omitempty"`
+	RunID          string   `json:"run_id,omitempty"`
+	ConversationID string   `json:"conversation_id,omitempty"`
+	SpanID         string   `json:"span_id,omitempty"`
+	ParentSpanID   string   `json:"parent_span_id,omitempty"`
+	StepName       string   `json:"step_name,omitempty"`
+	Outcome        string   `json:"outcome,omitempty"`
+	RetryReason    string   `json:"retry_reason,omitempty"`
+	FallbackReason string   `json:"fallback_reason,omitempty"`
+	QualityLabel   string   `json:"quality_label,omitempty"`
+	FeedbackScore  *float64 `json:"feedback_score,omitempty"`
+}
+
+type EventEvaluation struct {
+	Outcome        string   `json:"outcome,omitempty"`
+	RetryReason    string   `json:"retry_reason,omitempty"`
+	FallbackReason string   `json:"fallback_reason,omitempty"`
+	QualityLabel   string   `json:"quality_label,omitempty"`
+	FeedbackScore  *float64 `json:"feedback_score,omitempty"`
 }
 
 type TracePayloadBlock struct {
@@ -78,40 +107,24 @@ type TrackOptions struct {
 }
 
 type Event struct {
-	Provider       string              `json:"provider"`
-	EventType      string              `json:"event_type"`
-	Endpoint       string              `json:"endpoint"`
-	Model          string              `json:"model,omitempty"`
-	Status         string              `json:"status"`
-	Timestamp      time.Time           `json:"timestamp"`
-	Feature        string              `json:"feature"`
-	TenantID       string              `json:"tenant_id"`
-	CustomerID     string              `json:"customer_id,omitempty"`
-	AttemptType    string              `json:"attempt_type,omitempty"`
-	Plan           string              `json:"plan,omitempty"`
-	Environment    string              `json:"environment,omitempty"`
-	TemplateID     string              `json:"template_id,omitempty"`
-	TraceID        string              `json:"trace_id,omitempty"`
-	RunID          string              `json:"run_id,omitempty"`
-	ConversationID string              `json:"conversation_id,omitempty"`
-	SpanID         string              `json:"span_id,omitempty"`
-	ParentSpanID   string              `json:"parent_span_id,omitempty"`
-	StepName       string              `json:"step_name,omitempty"`
-	Outcome        string              `json:"outcome,omitempty"`
-	RetryReason    string              `json:"retry_reason,omitempty"`
-	FallbackReason string              `json:"fallback_reason,omitempty"`
-	QualityLabel   string              `json:"quality_label,omitempty"`
-	FeedbackScore  *float64            `json:"feedback_score,omitempty"`
-	SchemaVersion  string              `json:"schema_version,omitempty"`
-	SpanKind       string              `json:"span_kind,omitempty"`
-	ToolName       string              `json:"tool_name,omitempty"`
-	PayloadRefs    []string            `json:"payload_refs,omitempty"`
-	PayloadBlocks  []TracePayloadBlock `json:"payload_blocks,omitempty"`
-	Metrics        *TraceMetrics       `json:"metrics,omitempty"`
-	Decision       *TraceDecision      `json:"decision,omitempty"`
-	Usage          Usage               `json:"usage"`
-	LatencyMs      int64               `json:"latency_ms,omitempty"`
-	Error          *EventError         `json:"error,omitempty"`
+	SchemaVersion string              `json:"schema_version"`
+	EventType     string              `json:"event_type"`
+	Provider      string              `json:"provider"`
+	Endpoint      string              `json:"endpoint"`
+	Status        string              `json:"status"`
+	Timestamp     time.Time           `json:"timestamp"`
+	LatencyMs     int64               `json:"latency_ms"`
+	Model         string              `json:"model"`
+	Usage         Usage               `json:"usage"`
+	Tags          EventTags           `json:"tags"`
+	Evaluation    *EventEvaluation    `json:"evaluation,omitempty"`
+	SpanKind      string              `json:"span_kind,omitempty"`
+	ToolName      string              `json:"tool_name,omitempty"`
+	PayloadRefs   []string            `json:"payload_refs,omitempty"`
+	PayloadBlocks []TracePayloadBlock `json:"payload_blocks,omitempty"`
+	Metrics       *TraceMetrics       `json:"metrics,omitempty"`
+	Decision      *TraceDecision      `json:"decision,omitempty"`
+	Error         *EventError         `json:"error,omitempty"`
 }
 
 type TraceHandle struct {
